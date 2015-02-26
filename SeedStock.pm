@@ -1,6 +1,7 @@
 package SeedStock;
 use strict;
 use Moose;
+use Gene;
 
 has 'SeedID' => (		# Seed Identifier
 	is =>'rw',
