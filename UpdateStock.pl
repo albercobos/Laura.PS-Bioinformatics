@@ -175,7 +175,9 @@ sub check_stock{ #Tests if there are seeds enough to plant
 
 sub write_stock{
 	my ($NewStock,$FileName) =@_;
-	my $line;
+	my $line; my $Date;
+	$Date = &Ask_Date;
+	$NewStock->LastPlanted($Date);
 	$line=$NewStock->SeedID."\t".$NewStock->MutantGene."\t".$NewStock->LastPlanted."\t".$NewStock->Storage."\t".$NewStock->GramsRemaining;
 
 	open (OUTFILE, ">>$FileName"); 
