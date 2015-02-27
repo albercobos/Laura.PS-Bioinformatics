@@ -35,7 +35,6 @@ elsif($rw=~/[N|n]/){
 
 my $stock_data = &load_stock($filename);
 
-#my $ID='A334'; print(${$stock_data}{$ID}->Storage);
 
 &plant_seeds($stock_data,$SeedAmount,$NewFile);
 
