@@ -19,7 +19,7 @@ print"How many seeds do you want to plant? \n";
 my $SeedAmount=<STDIN>;
 chomp $SeedAmount;
 
-print"Do you want to rewrite the stock file? [Y/N]";
+print"Do you want to overwrite the stock file? [Y/N]";
 my $rw=<STDIN>;
 chomp $rw;
 my $NewFile;
