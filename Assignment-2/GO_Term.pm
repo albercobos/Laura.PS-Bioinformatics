@@ -40,7 +40,7 @@ sub test_GO_ID	{ #tests GO_ID format
 my $self = shift;
 my $GO_ID= $self -> ID;
 
-unless($GO_ID =~ /[GO|Go|go]:\s\d{7}/){
+unless($GO_ID =~ /[GO|Go|go]:\d{7}/){
 	die "Error: The GO ID $GO_ID has the wrong format.";
 }
 
