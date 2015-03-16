@@ -63,7 +63,7 @@ my $ProteinName=$self->Name;
 			my $GO_object= GO_Term -> new (
 				ID => "$GOid",
 				);
-			$GO_list{$GOid}=$GO_object;
+			$GO_List{$GOid}=$GO_object;
 		}
 	
 	$self->GO_annotation(%GO_List);
