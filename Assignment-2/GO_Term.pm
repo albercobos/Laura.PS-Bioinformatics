@@ -2,7 +2,7 @@ package GO_Term;
 use strict;
 use Moose;
 
-# Gene Object
+# Gene Ontology objetc
 
 =head1 NAME
 
