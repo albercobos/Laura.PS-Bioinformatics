@@ -43,6 +43,7 @@ my $GO_ID= $self -> ID;
 unless($GO_ID =~ /[GO|Go|go]:\d{7}/){
 	die "Error: The GO ID $GO_ID has the wrong format.";
 }
+}
 
 sub GetAllGOTerms{ # makes a hash of GO annotation objects, with all ID numbers and term names within an .obo file.
 my $GO_file = $_[0];
@@ -70,6 +71,7 @@ while (my $line = <IN>) {
 return %GOHash;
 }
 
+
 sub GetMyGOTerms{ # Gets GO term names from a given list of GO IDs. 
 my ($GOHashRef, $OboFile)=@_;
 my %GOHash=%{$GOHashRef};
@@ -86,8 +88,7 @@ while (my $line = <IN>) {
 		}
 		if ($save==1 and $line =~ /^name:\s(.*)$/){
 			$save=0;
-			my $name = $1;
-			%GOHash{$GOid}->Name($name);
+			$GOHash{$GOid}->Name($1);
 		}
 	}
 }
