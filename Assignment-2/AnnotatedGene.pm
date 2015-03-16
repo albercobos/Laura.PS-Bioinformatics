@@ -1,7 +1,7 @@
 package AnnotatedGene;
 use strict;
 use Moose;
-use GO_Term
+use GO_Term;
 
 # Gene Object
 
@@ -24,20 +24,10 @@ This module contains information like the Gene locus identifier and annotations 
 
 has 'ID' => (		# Gene Locus
 	is =>'rw', 
-	isa => 'str', 
+	isa => 'Str', 
 	required =>1,
-	trigger=> \&test_ID # Tests the ID format AT#G#####
-	);
-
-has 'ProteinID' => (
-	is => 'rw',
-	isa => 'str',
-	trigger => \&GOTermsFromLocus # Gets GO annotations on given protein
-	);
-
-has 'GO_annotation' => (	# Array of GO term codes.
-	is => 'rw',
-	isa => 'HashRef[GO_Term]'
+	trigger=> \&test_ID, # Tests the ID format AT#G#####
+	trigger=> \&CreateProtein #Creates protein objects from this gene locus.
 	);
 
 # METHODS
@@ -52,45 +42,22 @@ unless($gene_ID =~ /A[T|t]\d[G|g]\d{5}/){
 }
 }
 
-sub GetProteinID{ # $gene_locus -> $UniprotID
-# Gets Uniprot protein ID for a given locus name
-	my $gene=$_[0];
+sub CreateProtein{ # $gene_locus -> $Protein_Objects . Gets protein names from a locus and creates protein objects.
+	my $locus=$_[0]; my @proteins; my %ProteinHash
 
-	my $web="http://togows.dbcls.jp/search/ebi-uniprot/".$gene;
+	my $web="http://togows.dbcls.jp/search/ebi-uniprot/".$locus;
 	my $protID=&get("$web");
 
-	return $protID;
+	if ($protID =~/([\w|_]+)/g){
+		 push($1,@proteins);
+	}
+	foreach $name(@proteins){
+		my $ProteinObject=Protein->new(
+		Name=>"$name",
+		Locus=>"$locus"
+		);
+	$ProteinHash{$name}=$ProteinObject;
+	}
+return $ProteinHash;
 }
-
-sub GetUniprot { # $Uniprot_ID -> @Unirprot_file
-# Gets uniprot file for a protein in plain text.
-	my $UniprotID=$_[0];
-
-	my $web= 'http://togows.dbcls.jp/entry/ebi-uniprot/'.$UniprotID;
-	my @UniprotFile= &get("$web");
-
-	return @UniprotFile;
-}
-
-sub GOTermsFromLocus { # $Gene_Locus -> %GO_Terms
-# Gets GO Terms for a given locus of A. thaliana.
-my %GO_List;
-
-my $self=shift;
-my $locus=$self->ID;
-
-	my $ProteinName=&GetProteinID($locus);
-	my $UniprotFile=&GetUniprot($ProteinName);
-	
-		while ($UniprotFile=~/DR\s{3}GO;\s(GO:\d{7});/g){
-			my $GOid=$1;
-			my $GO_object= GO_Term -> new (
-				ID => "$GOid",
-				);
-			$GO_list{$GOid}=$GO_object;
-		}
-	
-	$self->GO_annotation(%GO_List);
-}
-
 1;
