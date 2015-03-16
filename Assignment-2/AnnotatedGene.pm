@@ -1,6 +1,7 @@
 package AnnotatedGene;
 use strict;
 use Moose;
+use GO_Term
 
 # Gene Object
 
@@ -26,17 +27,17 @@ has 'ID' => (		# Gene Locus
 	isa => 'str', 
 	required =>1,
 	trigger=> \&test_ID # Tests the ID format AT#G#####
-	trigger => \&GOTermsFromLocus # Gets protein ID and GO annotations on that protein.
 	);
 
 has 'ProteinID' => (
 	is => 'rw',
 	isa => 'str',
+	trigger => \&GOTermsFromLocus # Gets GO annotations on given protein
 	);
 
 has 'GO_annotation' => (	# Array of GO term codes.
 	is => 'rw',
-	isa => 'Array'
+	isa => 'HashRef[GO_Term]'
 	);
 
 # METHODS
@@ -73,20 +74,23 @@ sub GetUniprot { # $Uniprot_ID -> @Unirprot_file
 
 sub GOTermsFromLocus { # $Gene_Locus -> %GO_Terms
 # Gets GO Terms for a given locus of A. thaliana.
-	my @GO_List;
+my %GO_List;
 
 my $self=shift;
 my $locus=$self->ID;
 
 	my $ProteinName=&GetProteinID($locus);
-	$self->ProteinID($ProteinName);
 	my $UniprotFile=&GetUniprot($ProteinName);
 	
-	while ($UniprotFile=~/DR\s{3}GO;\s(GO:\d{7});/g){
-		my $GOid=$1;
-		push(@GO_List,$GOid);
-	}
-	$self->GO_annotation(@GO_List);
+		while ($UniprotFile=~/DR\s{3}GO;\s(GO:\d{7});/g){
+			my $GOid=$1;
+			my $GO_object= GO_Term -> new (
+				ID => "$GOid",
+				);
+			$GO_list{$GOid}=$GO_object;
+		}
+	
+	$self->GO_annotation(%GO_List);
 }
 
 1;
