@@ -43,7 +43,7 @@ unless($gene_ID =~ /A[T|t]\d[G|g]\d{5}/){
 }
 
 sub CreateProtein{ # $gene_locus -> $Protein_Objects . Gets protein names from a locus and creates protein objects.
-	my $locus=$_[0]; my @proteins; my %ProteinHash
+	my $locus=$_[0]; my @proteins; my %ProteinHash;
 
 	my $web="http://togows.dbcls.jp/search/ebi-uniprot/".$locus;
 	my $protID=&get("$web");
@@ -51,13 +51,16 @@ sub CreateProtein{ # $gene_locus -> $Protein_Objects . Gets protein names from a
 	if ($protID =~/([\w|_]+)/g){
 		 push($1,@proteins);
 	}
-	foreach $name(@proteins){
+	foreach my $name(@proteins){
 		my $ProteinObject=Protein->new(
 		Name=>"$name",
 		Locus=>"$locus"
 		);
 	$ProteinHash{$name}=$ProteinObject;
 	}
-return $ProteinHash;
+return %ProteinHash;
 }
+
+
+
 1;
