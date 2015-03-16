@@ -44,7 +44,7 @@ unless($GO_ID =~ /[GO|Go|go]:\d{7}/){
 	die "Error: The GO ID $GO_ID has the wrong format.";
 }
 
-sub GetGOTerms{ # makes a hash of GO annotation objects from .obo files, with ID numbers and term names.
+sub GetAllGOTerms{ # makes a hash of GO annotation objects, with all ID numbers and term names within an .obo file.
 my $GO_file = $_[0];
 
 open(IN, "<$GO_file") ||
@@ -66,9 +66,32 @@ while (my $line = <IN>) {
 			);
 		$GOHash{$GOid}=$GO_object;
 	}
-		
+}
 return %GOHash;
 }
+
+sub GetMyGOTerms{ # Gets GO term names from a given list of GO IDs. 
+my ($GOHashRef, $OboFile)=@_;
+my %GOHash=%{$GOHashRef};
+
+open(IN, "<$OboFile") ||
+            die "can't open the input gene info file!\n";
+
+my $save=0;
+while (my $line = <IN>) {
+	
+	foreach my $GOid (keys %GOHash){
+		if ($line=~/^id:\s$GOid/){
+			$save=1;					# $save variable is 1 until the next line, because 'name' is always in the line after id.
+		}
+		if ($save==1 and $line =~ /^name:\s(.*)$/){
+			$save=0;
+			my $name = $1;
+			%GOHash{$GOid}->Name($name);
+		}
+	}
+}
+
 }
 
 1;
