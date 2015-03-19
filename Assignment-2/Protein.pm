@@ -13,7 +13,7 @@ Protein- a module for representing info about proteins
 
 =head1 DESCRIPTION
 
-This module contains information for proteins.
+This module contains information for proteins and several subroutines to get that information from the web.
 
 =head1 SYNOPSIS
 
@@ -54,7 +54,7 @@ has 'Interactions' =>(
  
 	## METHODS ##
 
-sub GetProteinInfo { # $Protein ID -> GO Terms
+sub GetProteinInfo { # $Protein Name -> GO & KEGG annotations and Biogrid interaction info.
 # Gets GO Terms, KEGG Terms and interaction information from BioGrid for a given locus of A. thaliana.
 my %GO_List; my %KEGG_List; my @Interactors;
 
