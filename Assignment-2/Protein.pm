@@ -95,8 +95,7 @@ foreach my $annotation (@{$BioGrid_annots}){
     @Interactors=&SearchBioGrid($annotation->[0],$ProteinName,$Synonym);
 }
 
-foreach $item(@Interactors){print $item,"\n";}
-
+$self->Interactions(@Interactors);
 }
 
 
