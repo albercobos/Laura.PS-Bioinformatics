@@ -58,7 +58,7 @@ sub GetProteinInfo { # $Protein Name -> GO & KEGG annotations and Biogrid intera
 # Gets GO Terms, KEGG Terms and interaction information from BioGrid for a given locus of A. thaliana.
 my %GO_List; my %KEGG_List; my @Interactors;
 
-#my $self=shift;
+my $self=shift;
 my $ProteinName=$_[0]; my $Synonym;
 if ($ProteinName=~/^(\w*)_ARATH/){$Synonym=$1;}
 
