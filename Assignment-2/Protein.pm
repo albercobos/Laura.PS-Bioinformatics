@@ -29,7 +29,7 @@ has 'Name' =>(			# Uniprot ID
 	is => 'rw',
 	isa => 'Str',
 	required => 1,
-	trigger => \&GetGOTerms
+	trigger => \&GetProteinInfo
 );
 
 has 'Locus' =>(
