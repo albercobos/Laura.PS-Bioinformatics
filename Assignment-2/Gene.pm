@@ -44,8 +44,6 @@ unless($gene_ID =~ /A[T|t]\d[G|g]\d{5}/){
 sub CreateProtein{ # @gene_locus -> %Protein_Objects . Gets protein names from a locus and creates a hash of protein objects.
 	my $GeneHash=$_[0];
 	my @proteins; my %ProteinHash;
-	#my %GeneHash=%{$GeneHash_ref};
-
 
 	foreach my $gene (keys %$GeneHash){
 
@@ -69,7 +67,5 @@ sub CreateProtein{ # @gene_locus -> %Protein_Objects . Gets protein names from a
 	}
 return \%ProteinHash;
 }
-
-
 
 1;
