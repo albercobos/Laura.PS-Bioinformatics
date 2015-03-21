@@ -99,7 +99,7 @@ $self->Interactions(@Interactors);
 }
 
 
-sub SearchInBioGrid{ #looks for protein-protein interactions, gives an array of proteins that interact with query protein.
+sub SearchBioGrid{ #looks for protein-protein interactions, gives an array of proteins that interact with query protein.
 
 	my $key="edd249da4bf37ca8fb9eb608c1fedb57";
 	my $interactionID=$_[0]; my $ProteinName=$_[1]; my $Synonym=$_[2];
