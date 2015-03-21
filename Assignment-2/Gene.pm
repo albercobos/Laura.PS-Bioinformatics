@@ -1,7 +1,7 @@
-package AnnotatedGene;
+package Gene;
 use strict;
 use Moose;
-use GO_Term;
+use Protein; 
 
 # Gene Object
 
@@ -16,7 +16,7 @@ This module contains information like the Gene locus identifier and annotations 
 =head1 SYNOPSIS
 
  use Gene;
- my $Gene = Gene->new(Gene_Name => $name, ID => $ID);
+ my $Gene = Gene->new(Name => $name, ID => $ID);
 
 =cut
 
@@ -26,8 +26,7 @@ has 'ID' => (		# Gene Locus
 	is =>'rw', 
 	isa => 'Str', 
 	required =>1,
-	trigger=> \&test_ID, # Tests the ID format AT#G#####
-	trigger=> \&CreateProtein #Creates protein objects from this gene locus.
+	trigger=> \&test_ID # Tests the ID format AT#G#####
 	);
 
 # METHODS
@@ -42,9 +41,10 @@ unless($gene_ID =~ /A[T|t]\d[G|g]\d{5}/){
 }
 }
 
-sub CreateProtein{ # $gene_locus -> $Protein_Objects . Gets protein names from a locus and creates protein objects.
-	my $locus=$_[0]; my @proteins; my %ProteinHash;
-
+sub CreateProtein{ # $gene_locus, %Hash -> %Protein_Objects . Gets protein names from a locus and creates a hash of protein objects.
+	my $locus=$_[0]; my %ProteinHash=$_[1];
+	my @proteins; 
+	
 	my $web="http://togows.dbcls.jp/search/ebi-uniprot/".$locus;
 	my $protID=&get("$web");
 
