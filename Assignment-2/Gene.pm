@@ -1,5 +1,5 @@
 package Gene;
-use strict;
+
 use Moose;
 use Protein; 
 
@@ -41,24 +41,33 @@ unless($gene_ID =~ /A[T|t]\d[G|g]\d{5}/){
 }
 }
 
-sub CreateProtein{ # $gene_locus, %Hash -> %Protein_Objects . Gets protein names from a locus and creates a hash of protein objects.
-	my $locus=$_[0]; my %ProteinHash=$_[1];
-	my @proteins; 
-	
-	my $web="http://togows.dbcls.jp/search/ebi-uniprot/".$locus;
-	my $protID=&get("$web");
+sub CreateProtein{ # @gene_locus -> %Protein_Objects . Gets protein names from a locus and creates a hash of protein objects.
+	my $GeneHash=$_[0];
+	my @proteins; my %ProteinHash;
+	#my %GeneHash=%{$GeneHash_ref};
 
-	if ($protID =~/([\w|_]+)/g){
-		 push($1,@proteins);
+
+	foreach my $gene (keys %$GeneHash){
+
+		my $locus=$GeneHash->{$gene}->{ID};
+		my $web="http://togows.dbcls.jp/search/ebi-uniprot/"."$locus";
+		my $protID=&LWP::Simple::get("$web");
+
+		if ($protID =~/([\w|_]+)/g){
+			 push(@proteins, $1);
+		}
+		foreach my $name(@proteins){
+			my $Synonym;
+			if ($name=~/^(\w*)_ARATH/){$Synonym=$1;}
+			my $ProteinObject=Protein->new(
+			Name=>"$name",
+			Synonym=>"$Synonym",
+			Locus=>"$locus"
+			);
+		$ProteinHash{$name}=$ProteinObject;
+		}
 	}
-	foreach my $name(@proteins){
-		my $ProteinObject=Protein->new(
-		Name=>"$name",
-		Locus=>"$locus"
-		);
-	$ProteinHash{$name}=$ProteinObject;
-	}
-return %ProteinHash;
+return \%ProteinHash;
 }
 
 
