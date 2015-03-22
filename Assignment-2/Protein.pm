@@ -1,75 +1,150 @@
-package Gene;
+package Protein;
 
-use Moose;
-use Protein; 
+use strict;
+use Moose; use LWP::Simple;
+use GO_Term; use Gene; use KEGG_Term;
 
-# Gene Object
+
+# Protein objetc
 
 =head1 NAME
 
-Gene - a module for representing info about genes
+Protein- a module for representing info about proteins
 
 =head1 DESCRIPTION
 
-This module contains information like the Gene locus identifier and annotations related. It automatically creates protein objects for every gene object added.
+This module contains information for proteins and methods for protein annotation from Gene Ontology, KEGG and BioGrid.
 
 =head1 SYNOPSIS
 
- use Gene;
- my $Gene = Gene->new(Name => $name, ID => $ID);
+ use Protein;
+ my $Protein = Protein->new(Name => $name);
 
 =cut
 
-# PROPERTIES
 
-has 'ID' => (		# Gene Locus
-	is =>'rw', 
-	isa => 'Str', 
-	required =>1,
-	trigger=> \&test_ID # Tests the ID format AT#G#####
+	## PROPERTIES ##
+
+has 'Name' =>(			# Uniprot ID
+	is => 'rw',
+	isa => 'Str',
+	required => 1,
+	trigger => \&GetProteinInfo
+);
+
+has 'Synonym' =>(			
+	is => 'rw',
+	isa => 'Str',
+);
+
+has 'Locus' =>(			#Locus in A. thaliana genome
+	is => 'rw',
+	isa => 'Str'
+);
+
+has 'GO_annotation' => (	# Hash of GO term codes.
+	is => 'rw',
+	isa => 'HashRef[GO_Term]'
 	);
 
-# METHODS
+has 'KEGG_annotation' => (	# Hash of GO term codes.
+	is => 'rw',
+	isa => 'HashRef[KEGG_Term]'
+	);
 
-sub test_ID	{ #tests Gen_ID format
+has 'Interactions' =>(
+	is => 'rw',
+	isa => 'ArrayRef[Str]'
+	);
+ 
+	## METHODS ##
 
-my $self = shift;
-my $gene_ID= $self -> ID;
+sub GetProteinInfo { # $Protein ID -> GO Terms
+# Gets GO Terms, KEGG Terms and interaction information from BioGrid for a given locus of A. thaliana.
+my %GO_List; my %KEGG_List; my @Interactors;
 
-unless($gene_ID =~ /A[T|t]\d[G|g]\d{5}/){
-	die "Error: The gene ID $gene_ID has the wrong format.";
+my $self=shift;
+my $ProteinName=$_[0]; my $Synonym;
+	if ($ProteinName=~/^(\w*)_ARATH/){$Synonym=$1;}
+
+		my $UniprotFile=get("http://togows.dbcls.jp/entry/uniprot/".$ProteinName."/dr.json");
+		my $json = JSON->new; 
+		my $ref_content = $json->decode( $UniprotFile );
+
+		my $refs = $ref_content->[0]; # an array with only one member… a hash-ref!
+
+	my $GO_annots = $refs->{GO};
+	my $KEGG_annots= $refs->{KEGG};
+	my $BioGrid_annots= $refs->{BioGrid};
+
+	my $GO_List=&LoadGO($GO_annots);
+	my $KEGG_List=&LoadKEGG($KEGG_annots);
+
+	$self->GO_annotation($GO_List);
+	$self->KEGG_annotation($KEGG_List);
+
+	foreach my $annotation (@{$BioGrid_annots}){
+		@Interactors=&SearchBioGrid($annotation->[0],$ProteinName,$Synonym);
+	}
+	$self->Interactions(@Interactors);
 }
+
+
+sub LoadGO{
+my $GO_annots=$_[0]; my %GO_List;
+	foreach my $annotation (@{$GO_annots}){ # Creates GO annotation objects
+		my $GO_object= GO_Term -> new (
+			ID => "$annotation->[0]",
+			Name => "$annotation->[1]"
+		);
+		$GO_List{$annotation->[0]}=$GO_object;
+	}
+	return \%GO_List;
 }
 
-sub CreateProtein{ # @gene_locus -> %Protein_Objects . Gets protein names from a locus and creates a hash of protein objects.
-	my $GeneHash=$_[0];
-	my @proteins; my %ProteinHash;
+sub LoadKEGG{
+my $KEGG_annots=$_[0]; my %KEGG_List;
+	foreach my $annotation (@{$KEGG_annots}){ # Creates GO annotation objects
+		my $KEGG_object= KEGG_Term -> new (
+			ID => "$annotation->[0]",
+			Name => "$annotation->[1]"
+		);
+		$KEGG_List{$annotation->[0]}=$KEGG_object;
+	}
+	return \%KEGG_List;
+	}
 
 
+sub SearchBioGrid{ #looks for protein-protein interactions, gives an array of proteins that interact with query protein.
 
-	foreach my $gene (keys %$GeneHash){
+	my $key="edd249da4bf37ca8fb9eb608c1fedb57";
+	my $interactionID=$_[0]; my $ProteinName=$_[1]; my $Synonym=$_[2];
+	my @Interactors;
+	my $url="http://webservice.thebiogrid.org/interactions/?geneList=$interactionID&searchBiogridIds=true&includeInteractors=true&accesskey=$key&format=jsonExtended";
+	my $s = get($url);
 
-		my $locus=$GeneHash->{$gene}->{ID};
-		my $web="http://togows.dbcls.jp/search/ebi-uniprot/"."$locus";
-		my $protID=&LWP::Simple::get("$web");
+	my $json = JSON->new; 
+	my $perl_scalar = $json->decode( $s );
 
-		if ($protID =~/([\w|_]+)/g){
-			 push(@proteins, $1);
-		}
-		foreach my $name(@proteins){
-			my $Synonym;
-			if ($name=~/^(\w*)_ARATH/){$Synonym=$1;}
-			my $ProteinObject=Protein->new(
-			Name=>"$name",
-			Synonym=>"$Synonym",
-			Locus=>"$locus"
-			);
-		$ProteinHash{$name}=$ProteinObject;
+	foreach my $key(keys %$perl_scalar){
+
+		my $type = $perl_scalar->{$key}->{'EXPERIMENTAL_SYSTEM'};
+
+		next if $type =~ /affinity/i; # Only use co-localization and fractionation or two-hybrid data
+		next if $type =~ /pca/i; 
+		next unless ($type =~ /localization/i || $type =~ /fractionation/i || $type =~ /hybrid/);
+		
+		# Compare Biogrid protein names to our protein name to find interactors
+		
+		if (($perl_scalar->{$key}->{'OFFICIAL_SYMBOL_A'} eq $ProteinName or $perl_scalar->{$key}->{'OFFICIAL_SYMBOL_A'} eq $Synonym) and $perl_scalar->{$key}->{'OFFICIAL_SYMBOL_B'} ne $ProteinName and $perl_scalar->{$key}->{'OFFICIAL_SYMBOL_B'} ne $Synonym){			
+			push (@Interactors,$perl_scalar->{$key}->{'OFFICIAL_SYMBOL_B'});
+			next;
+		}elsif($perl_scalar->{$key}->{'OFFICIAL_SYMBOL_B'} eq $ProteinName or $perl_scalar->{$key}->{'OFFICIAL_SYMBOL_B'} eq $Synonym and $perl_scalar->{$key}->{'OFFICIAL_SYMBOL_A'} ne $ProteinName and $perl_scalar->{$key}->{'OFFICIAL_SYMBOL_A'} ne $Synonym){
+			my $interactor=$perl_scalar->{$key}->{'OFFICIAL_SYMBOL_A'};
+			push (@Interactors,$perl_scalar->{$key}->{'OFFICIAL_SYMBOL_A'});
+			next;
 		}
 	}
-return \%ProteinHash;
+	return @Interactors;
 }
-
-
-
 1;
