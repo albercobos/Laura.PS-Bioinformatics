@@ -56,7 +56,7 @@ for (my $i=1;$i<$NetNumber;$i++){
 
 #This script prints your networks in a file
 
-open (OUTFILE, '>$NetworkFile'); 
+open (OUTFILE, ">$NetworkFile"); 
 
 foreach my $net(keys %Network_List){
 print OUTFILE "NETWORK NUMBER: $net \n";
