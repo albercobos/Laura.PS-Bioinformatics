@@ -21,14 +21,14 @@ A module for representing protein networks based on protein-protein interaction.
 
 ## PROPERTIES
 
-has 'Name' =>(			# Uniprot ID
+has 'Number' =>(			# network number
 	is => 'rw',
 	isa => 'Str',
 	required => 1,
 );
 
 
-has 'Proteins' =>(			# Uniprot ID
+has 'Proteins' =>(			# Hash of protein objects
 	is => 'rw',
 	isa => 'HashRef[Protein]',
 );
@@ -49,7 +49,7 @@ my $AddedNumber=1; my $InteractorList;
 		%ProteinsAdded=%{$ProteinsAdded_ref};
 		$RemainingNumber=$RemainingNumber-$AddedNumber;
 	}
-	return(\%ProteinHash, $RemainingNumber);
+	return(\%ProteinsAdded, $RemainingNumber);
 }
 
 
@@ -58,6 +58,7 @@ sub AddToNetwork{ #This subroutine adds proteins from a hash to a network based 
 my ($ProteinHash_ref, $ProteinsAdded_ref, $NetNumber, $InteractorList, $empty)=@_;
 my %ProteinsAdded=%{$ProteinsAdded_ref}; my %ProteinHash=%{$ProteinHash_ref};
 my $AddedNumber=0;
+
 
 foreach my $prot (keys %ProteinHash){ #If the network is empty, we add the first protein
 
@@ -76,10 +77,10 @@ foreach my $prot (keys %ProteinHash){ #If the network is empty, we add the first
 		$AddedNumber=1;
 		
 	}else{								# When a network has one or more proteins, we add a new one searching their name or their interactors in the network's InteractorList. This way, we find direct links between two proteins, as well as proteins linked trough a third one.
-		my $Name=$ProteinHash{$prot}->Name;
+		my $Name=$ProteinHash{$prot}->Synonym;
 		
 		if ($InteractorList=~/$Name/){
-			if (defined $ProteinsAdded{$prot}){next;} #If the proteins is not included in the hash, we add it.
+			if (defined $ProteinsAdded{$prot}){next;} #If the proteins is included in the hash, we skip it.
 				$ProteinsAdded{$prot}=$NetNumber;
 
 				my @Ints=$ProteinHash{$prot}->Interactions->[0];
@@ -105,8 +106,20 @@ foreach my $prot (keys %ProteinHash){ #If the network is empty, we add the first
 	
 	}
 
+} 
+return(\%ProteinsAdded, $AddedNumber, $InteractorList,$empty);
 }
-	#foreach my $prot (keys %ProteinsAdded){print $prot,"\t",$ProteinsAdded{$prot},"\n";}
-	return(\%ProteinsAdded, $AddedNumber, $InteractorList,$empty);
+
+sub HashFromNetwork{ # This subroutines makes a protein hash with members of one network 
+my ($ProteinHash_ref, $ProteinsAdded_ref,$i)=@_;
+my %ProteinsAdded=%{$ProteinsAdded_ref}; my %ProteinHash=%{$ProteinHash_ref};
+my %NetworkHash;
+	foreach my $key (keys %ProteinsAdded){ 
+		if($ProteinsAdded{$key}==$i){
+		
+			$NetworkHash{$key}=$ProteinHash{$key};
+			}
+	}
+return \%NetworkHash;
 }
 1;
