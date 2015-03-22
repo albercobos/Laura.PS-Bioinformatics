@@ -11,7 +11,7 @@ Gene - a module for representing info about genes
 
 =head1 DESCRIPTION
 
-This module contains information like the Gene locus identifier and annotations related.
+This module contains information like the Gene locus identifier and annotations related. It automatically creates protein objects for every gene object added.
 
 =head1 SYNOPSIS
 
@@ -45,6 +45,8 @@ sub CreateProtein{ # @gene_locus -> %Protein_Objects . Gets protein names from a
 	my $GeneHash=$_[0];
 	my @proteins; my %ProteinHash;
 
+
+
 	foreach my $gene (keys %$GeneHash){
 
 		my $locus=$GeneHash->{$gene}->{ID};
@@ -67,5 +69,7 @@ sub CreateProtein{ # @gene_locus -> %Protein_Objects . Gets protein names from a
 	}
 return \%ProteinHash;
 }
+
+
 
 1;
