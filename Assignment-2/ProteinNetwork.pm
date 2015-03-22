@@ -1,6 +1,6 @@
 package ProteinNetwork;
 use Gene; use Protein; use KEGG_Term; use GO_Term;
-use Moose; use strict;
+use Moose; 
 
 # Gene Object
 
@@ -38,8 +38,8 @@ has 'Proteins' =>(			# Uniprot ID
 
 
 sub MakeNetwork { #This subroutine creates a protein network hash fron a protein hash
-my ($ProteinHash_ref, $ProteinsAdded_ref, $NetNumber, $empty)=@_;
-my $ProteinsAdded=%{$ProteinsAdded_ref};
+my ($ProteinHash_ref, $ProteinsAdded_ref, $NetNumber, $empty, $RemainingNumber)=@_;
+my %ProteinsAdded=%{$ProteinsAdded_ref}; my %ProteinHash=%{$ProteinHash_ref};
 
 my $AddedNumber=1; my $InteractorList;
 
@@ -56,48 +56,49 @@ my $AddedNumber=1; my $InteractorList;
 sub AddToNetwork{ #This subroutine adds proteins from a hash to a network based on their protein-protein interactions.
 
 my ($ProteinHash_ref, $ProteinsAdded_ref, $NetNumber, $InteractorList, $empty)=@_;
-my $ProteinsAdded=%{$ProteinsAdded_ref};
+my %ProteinsAdded=%{$ProteinsAdded_ref}; my %ProteinHash=%{$ProteinHash_ref};
 my $AddedNumber=0;
 
 foreach my $prot (keys %ProteinHash){ #If the network is empty, we add the first protein
 
 	if ($empty==1){
-		if($ProteinsAdded{$prot}==undef){
-			$ProteinsAdded{$prot}=$NetNumber;
-			$InteractorList='';
+		if (defined $ProteinsAdded{$prot}){next;}
+		
+		$ProteinsAdded{$prot}=$NetNumber;
+		$InteractorList='';
 
-			my @Ints=$ProteinHash{$prot}->Interactions->[0];
-			foreach my $int (@Ints){
+		my @Ints=$ProteinHash{$prot}->Interactions->[0];
+		foreach my $int (@Ints){
 
-				$InteractorList=$InteractorList.','."$int";			
-			}
-			$empty=0;
-			$AddedNumber=1;
+			$InteractorList=$InteractorList.','."$int";			
 		}
+		$empty=0;
+		$AddedNumber=1;
+		
 	}else{								# When a network has one or more proteins, we add a new one searching their name or their interactors in the network's InteractorList. This way, we find direct links between two proteins, as well as proteins linked trough a third one.
-		$Name=$ProteinHash{$prot}->Synonym;
+		my $Name=$ProteinHash{$prot}->Name;
 		
 		if ($InteractorList=~/$Name/){
-			if($ProteinsAdded{$prot}==undef){ #If the proteins is not included in the hash, we add it.
+			if (defined $ProteinsAdded{$prot}){next;} #If the proteins is not included in the hash, we add it.
 				$ProteinsAdded{$prot}=$NetNumber;
 
 				my @Ints=$ProteinHash{$prot}->Interactions->[0];
 				foreach my $int (@Ints){
 					$InteractorList=$InteractorList.','."$int";}
 				$AddedNumber=$AddedNumber+1;
-			}
+			
 		}else{
 		my @Ints=$ProteinHash{$prot}->Interactions->[0];
 
 		foreach my $int (@Ints){
 			if ($InteractorList=~/$int/){
-				if($ProteinsAdded{$prot}==undef){
+				if (defined $ProteinsAdded{$prot}){next;}
 					$ProteinsAdded{$prot}=$NetNumber;
 					foreach my $prots (@Ints){
 						$InteractorList=$InteractorList.','."$prots";
 					}				
 					$AddedNumber=$AddedNumber+1;
-				}
+				
 			}else{next;}
 		}
 		}
@@ -105,6 +106,7 @@ foreach my $prot (keys %ProteinHash){ #If the network is empty, we add the first
 	}
 
 }
+	#foreach my $prot (keys %ProteinsAdded){print $prot,"\t",$ProteinsAdded{$prot},"\n";}
 	return(\%ProteinsAdded, $AddedNumber, $InteractorList,$empty);
 }
 1;
